@@ -1,6 +1,8 @@
 from netmiko import ConnectHandler
 from subprocess import check_output
+from datetime import date
 import json, getpass
+import xlsxwriter
 
 
 def load_config(configJSON):
@@ -18,7 +20,7 @@ def share_logs(projects, fileshares):
         # Get logs off network shares.
         share_logs={}
         for i in projects:
-                log_list= (check_output("dir {} /b /a-d".format(fileshares["log_filepath"]), shell=True).decode()).split()
+                log_list= (check_output("dir {} /b /a-d".format(fileshares["log_filepath"]+i), shell=True).decode()).split()
                 share_logs[i]=log_list
         return share_logs
 
@@ -56,9 +58,33 @@ def logger_connect():
         
 
 
-# Check logserver logs against fileshares
+# Create Spreadsheet
+def spreadsheet_writer(share_logs, server_logs, config):
+        file_name= str(date.today())+".xlsx"
+        headers=["Project","Log","Set to Delete","On server"]
+        workbook = xlsxwriter.Workbook(file_name)
+        worksheet1=workbook.add_worksheet("Raw Logs")
+        worksheet1.write(0,0, "Project")
+        worksheet1.write(0,1, "Log")
+        worksheet1.write(0,2, "Set to Delete")
+        worksheet2=workbook.add_worksheet("Archived Logs")
+        row=1
+        col=0
+        
+        for key in server_logs['raw'].keys():
+                
+                for log in server_logs['raw'][key]:
+                        worksheet1.write(row,col, key )
+                        worksheet1.write(row, col+1, log)
+                        row+=1
+                        
+        
 
-# Write to CSV file.
+
+        
+
+
+
 
 if __name__=="__main__":
-        print(logger_connect())
+        
