@@ -2,7 +2,7 @@ from netmiko import ConnectHandler
 from subprocess import check_output
 from datetime import date
 import json, getpass
-#import xlsxwriter
+import xlsxwriter
 
 
 def load_config(configJSON):
@@ -62,7 +62,7 @@ def logger_connect():
 
 
 # Create Spreadsheet
-def spreadsheet_writer(share_logs, server_logs, config):
+def spreadsheet_writer(server_logs):
         file_name= str(date.today())+".xlsx"
         headers=["Project","Log","Set to Delete","On server"]
         workbook = xlsxwriter.Workbook(file_name)
@@ -80,7 +80,7 @@ def spreadsheet_writer(share_logs, server_logs, config):
                         worksheet1.write(row,col, key )
                         worksheet1.write(row, col+1, log)
                         row+=1
-                        
+        workbook.close()        
         
 
 def main():

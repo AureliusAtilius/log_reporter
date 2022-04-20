@@ -1,0 +1,15 @@
+{
+        "hosts": {
+                "host1": {
+                        "hostname": ,
+                        "device_type": ,
+                        "raw_log_path": ,
+                        "ark_log_path": 
+                },
+                "host2": {
+                        "log_filepath": 
+                }
+        },
+        "Projects": []
+
+}
