@@ -2,7 +2,7 @@ from netmiko import ConnectHandler
 from subprocess import check_output
 from datetime import date
 import json, getpass
-import xlsxwriter
+#import xlsxwriter
 
 
 def load_config(configJSON):
@@ -51,10 +51,13 @@ def logger_connect():
                         ark_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["ark_log_path"]+i))
                         logs["ark"][i]=ark_logs.split()
                 logserver_connection.disconnect()
-                return logs
+                
         except:
                 print("Command failed")
                 logserver_connection.disconnect()
+        
+        with open("logs.json","w") as outfile:
+                json.dump(logs, outfile)
         
 
 
@@ -80,6 +83,8 @@ def spreadsheet_writer(share_logs, server_logs, config):
                         
         
 
+def main():
+        logger_connect()
 
         
 
@@ -87,4 +92,4 @@ def spreadsheet_writer(share_logs, server_logs, config):
 
 
 if __name__=="__main__":
-        
+        main()
