@@ -16,11 +16,11 @@ def get_creds():
         username,pw= input("Username: "), getpass.getpass(prompt="Password: ", stream=None)
         return username,pw
 
-def share_logs(projects, fileshares):
+def share_logs(projects, fileshares_path):
         # Get logs off network shares.
         share_logs={}
         for i in projects:
-                log_list= (check_output("dir {} /b /a-d".format(fileshares["log_filepath"]+i), shell=True).decode()).split()
+                log_list= (check_output("dir {} /b /a-d".format(fileshares_path+i), shell=True).decode()).split()
                 share_logs[i]=log_list
         return share_logs
 
@@ -66,22 +66,37 @@ def spreadsheet_writer(server_logs):
         file_name= str(date.today())+".xlsx"
         headers=["Project","Log","Set to Delete","On server"]
         workbook = xlsxwriter.Workbook(file_name)
+        
+        # Create worksheet 1 with raw logs on log server
         worksheet1=workbook.add_worksheet("Raw Logs")
         worksheet1.write(0,0, "Project")
         worksheet1.write(0,1, "Log")
         worksheet1.write(0,2, "Set to Delete")
+        dict_writer(server_logs['raw'], worksheet1)
+        
+
+        # Create worksheet 2 with archived logs on log server
         worksheet2=workbook.add_worksheet("Archived Logs")
+        worksheet2.write(0,0, "Project")
+        worksheet2.write(0,1, "Log")
+        dict_writer(server_logs['ark'], worksheet2)
+        
+        
+        # Create worksheet 3 with archived logs on fileshares server
+        worksheet3=workbook.add_worksheet("Log Shares")
+        worksheet3.write(0,0, "Project")
+        worksheet3.write(0,1, "Log")
+        workbook.close()   
+
+def dict_writer(dict, worksheet):
         row=1
         col=0
-        
-        for key in server_logs['raw'].keys():
-                
-                for log in server_logs['raw'][key]:
-                        worksheet1.write(row,col, key )
-                        worksheet1.write(row, col+1, log)
+        for key in dict.keys():
+                for log in dict[key]:
+                        worksheet.write(row,col, key )
+                        worksheet.write(row, col+1, log)
                         row+=1
-        workbook.close()        
-        
+
 
 def main():
         logger_connect()
