@@ -27,7 +27,7 @@ def share_logs(projects, fileshares_path):
 
 
 
-def logger_connect():
+def logger_connect(config):
         # Connect to logserver and retrieve dictinary of logs by project number
         config = load_config("config.json")
         
@@ -56,13 +56,12 @@ def logger_connect():
                 print("Command failed")
                 logserver_connection.disconnect()
         
-        with open("logs.json","w") as outfile:
-                json.dump(logs, outfile)
+        return logs
         
 
 
 # Create Spreadsheet
-def spreadsheet_writer(server_logs):
+def spreadsheet_writer(server_logs, share_logs):
         file_name= str(date.today())+".xlsx"
         headers=["Project","Log","Set to Delete","On server"]
         workbook = xlsxwriter.Workbook(file_name)
@@ -86,6 +85,8 @@ def spreadsheet_writer(server_logs):
         worksheet3=workbook.add_worksheet("Log Shares")
         worksheet3.write(0,0, "Project")
         worksheet3.write(0,1, "Log")
+        dict_writer(share_logs, worksheet3)
+
         workbook.close()   
 
 def dict_writer(dict, worksheet):
@@ -99,11 +100,13 @@ def dict_writer(dict, worksheet):
 
 
 def main():
-        logger_connect()
+        config=load_config()
+        logs=logger_connect(config)
+        share_logs= share_logs(config["Projects"], config["hosts"]["host2"]["log_filepath"])
+        spreadsheet_writer(logs, share_logs)
+
 
         
-
-
 
 
 if __name__=="__main__":
