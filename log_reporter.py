@@ -78,6 +78,7 @@ def spreadsheet_writer(server_logs, share_logs):
         worksheet2=workbook.add_worksheet("Archived Logs")
         worksheet2.write(0,0, "Project")
         worksheet2.write(0,1, "Log")
+        worksheet2.write(0,2, "Set to Delete")
         dict_writer(server_logs['ark'], worksheet2)
         
         
@@ -100,10 +101,10 @@ def dict_writer(dict, worksheet):
 
 
 def main():
-        config=load_config()
+        config=load_config("config.json")
         logs=logger_connect(config)
-        share_logs= share_logs(config["Projects"], config["hosts"]["host2"]["log_filepath"])
-        spreadsheet_writer(logs, share_logs)
+        shares_logs= share_logs(config["Projects"], config["hosts"]["host2"]["log_filepath"])
+        spreadsheet_writer(logs, shares_logs)
 
 
         
