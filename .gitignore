@@ -2,5 +2,4 @@
 *.json
 *.xlsx
 *test.py
-!fileshare_test.py
 !template-config.json
