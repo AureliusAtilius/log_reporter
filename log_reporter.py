@@ -70,32 +70,38 @@ def spreadsheet_writer(server_logs, share_logs):
         worksheet1=workbook.add_worksheet("Raw Logs")
         worksheet1.write(0,0, "Project")
         worksheet1.write(0,1, "Log")
+        worksheet1.write(0,2,"Archived")
+        worksheet1.write(0,3,"On Shares")
         worksheet1.write(0,2, "Set to Delete")
-        dict_writer(server_logs['raw'], worksheet1)
+        dict_writer(server_logs,share_logs,worksheet1)
         
 
         # Create worksheet 2 with archived logs on log server
-        worksheet2=workbook.add_worksheet("Archived Logs")
+        '''worksheet2=workbook.add_worksheet("Archived Logs")
         worksheet2.write(0,0, "Project")
         worksheet2.write(0,1, "Log")
-        dict_writer(server_logs['ark'], worksheet2)
+        dict_writer(server_logs['ark'], worksheet2)'''
         
         
         # Create worksheet 3 with archived logs on fileshares server
-        worksheet3=workbook.add_worksheet("Log Shares")
+        '''worksheet3=workbook.add_worksheet("Log Shares")
         worksheet3.write(0,0, "Project")
         worksheet3.write(0,1, "Log")
-        dict_writer(share_logs, worksheet3)
+        dict_writer(share_logs, worksheet3)'''
 
         workbook.close()   
 
-def dict_writer(dict, worksheet):
+def dict_writer(server_logs, share_logs, worksheet):
         row=1
         col=0
-        for key in dict.keys():
-                for log in dict[key]:
+        for key in server_logs['raw'].keys():
+                for log in server_logs['raw'][key]:
                         worksheet.write(row,col, key )
                         worksheet.write(row, col+1, log)
+                        if log+'.7z' in server_logs['ark'][key]:
+                                worksheet.write(row,col+2, "*")
+                        if log+".7z" in share_logs[key]:
+                                worksheet.write(row,col+3, "*")
                         row+=1
 
 
