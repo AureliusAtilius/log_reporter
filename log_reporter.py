@@ -72,7 +72,7 @@ def spreadsheet_writer(server_logs, share_logs):
         worksheet1.write(0,1, "Log")
         worksheet1.write(0,2,"Archived")
         worksheet1.write(0,3,"On Shares")
-        worksheet1.write(0,2, "Set to Delete")
+        worksheet1.write(0,4, "Set to Delete")
         dict_writer(server_logs,share_logs,worksheet1)
         
 
