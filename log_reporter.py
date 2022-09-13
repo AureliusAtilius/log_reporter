@@ -3,6 +3,7 @@ from subprocess import check_output
 from datetime import date
 import json, getpass
 import xlsxwriter
+import sys
 
 
 def load_config(configJSON):
@@ -40,24 +41,23 @@ def logger_connect(config):
         try:
 
                 logserver_connection= ConnectHandler(**{"device_type":logserver["device_type"],"host":logserver["hostname"],"username":username, "password":pw})
-        except Exception:
-                print("SSH connection failed on",logserver["hostname"])
-
-        # Send command listing logs
-        try:
-                for i in projects:
-                        raw_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["raw_log_path"]+i))
-                        logs["raw"][i]=raw_logs.split()
-                        ark_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["ark_log_path"]+i))
-                        logs["ark"][i]=ark_logs.split()
-                logserver_connection.disconnect()
+                try:
+                        for i in projects:
+                                raw_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["raw_log_path"]+i))
+                                logs["raw"][i]=raw_logs.split()
+                                ark_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["ark_log_path"]+i))
+                                logs["ark"][i]=ark_logs.split()
+                        logserver_connection.disconnect()
                 
-        except:
-                print("Command failed")
-                logserver_connection.disconnect()
-        
-        return logs
-        
+                except:
+                        print("Command failed")
+                        logserver_connection.disconnect()
+                        sys.exit()
+                return logs
+        except Exception:
+                print("SSH connection failed on",logserver["hostname"],". Check authentication.")
+                sys.exit()  
+
 
 
 # Create Spreadsheet
@@ -75,21 +75,6 @@ def spreadsheet_writer(server_logs, share_logs):
         worksheet1.write(0,4, "Set to Delete")
         dict_writer(server_logs,share_logs,worksheet1)
         
-
-        # Create worksheet 2 with archived logs on log server
-        '''worksheet2=workbook.add_worksheet("Archived Logs")
-        worksheet2.write(0,0, "Project")
-        worksheet2.write(0,1, "Log")
-        worksheet2.write(0,2, "Set to Delete")
-        dict_writer(server_logs['ark'], worksheet2)'''
-        
-        
-        # Create worksheet 3 with archived logs on fileshares server
-        '''worksheet3=workbook.add_worksheet("Log Shares")
-        worksheet3.write(0,0, "Project")
-        worksheet3.write(0,1, "Log")
-        dict_writer(share_logs, worksheet3)'''
-
         workbook.close()   
 
 def dict_writer(server_logs, share_logs, worksheet):
