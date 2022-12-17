@@ -25,11 +25,8 @@ def share_logs(projects, fileshares_path):
                 share_logs[i]=log_list
         return share_logs
 
-
-
-
 def logger_connect(config):
-        # Connect to logserver and retrieve dictinary of logs by project number
+        # Connect to logserver and retrieve dictionary of logs by project number
         config = load_config("config.json")
         
         logserver= config['hosts']['host1']
@@ -57,8 +54,6 @@ def logger_connect(config):
         except Exception:
                 print("SSH connection failed on",logserver["hostname"],". Check authentication.")
                 sys.exit()  
-
-
 
 # Create Spreadsheet
 def spreadsheet_writer(server_logs, share_logs):
