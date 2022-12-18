@@ -1,6 +1,6 @@
 import pandas as pd
-
-from log_reporter import get_creds
+import paramiko
+from log_reporter import get_creds, load_config
 
 #Funtion for reading spreadsheet
 def readSpreadsheet():
@@ -38,16 +38,80 @@ def readSpreadsheet():
     except Exception as ex:
         print(ex)
     
+def logRemover(toDeleteRAW,toDeleteARC):
+    print('running')
 
-#TODO: function for deleting logs.
-'''def logRemover(toDeleteRAW):
-    selection = input("Input 1 to print logs to delete. n\Input 2 to delete logs. n\Input 3 to cancel")
-    if selection in ["1","2","3"]:
+    username,pw =get_creds()
+    config=load_config("config.json")
+    hostname=config["hosts"]["host1"]["hostname"]
+    rawPath=config['hosts']['host1']["raw_log_path"]
+    arcPath=config['hosts']['host1']["ark_log_path"]
+    try:
+        port = '22'
+         
+        # created client using paramiko
+        client = paramiko.SSHClient()
+         
+        # connecting paramiko using host
+        # name and password
+        client.load_system_host_keys()
+        client.connect(hostname=hostname, port=22, username=username,
+                       password=pw)
+
+        #iterate over raw logs to remove them.
+        for prj in toDeleteRAW:
+            for log in prj:
+                #substitute find command for rm -Rf when testing
+                #command= f"rm -RF {rawPath}/{prj}/{log}"
+                command =f"find {rawPath}/{prj} -name {log}"
+
+                # below line command will actually
+                # execute in your remote machine
+                (stdin, stdout, stderr) = client.exec_command(command)
+         
+                # redirecting all the output in cmd_output
+                # variable
+                cmd_output = stdout.read()
+                
+                
+                # create file which will read our
+                # cmd_output and write it in output_file
+                output_file="output.txt"
+                if cmd_output:
+                    with open(output_file, "w+") as file:
+                        output="Project "+prj+" "+log+" "+str(cmd_output)
+                        file.write(output)
         
-        if 
+        #iterate over archived logs to remove them.
+        for prj in toDeleteARC:
+            for log in prj:
+                #substitute find command for rm -Rf when testing
+                #command= f"rm -RF {arcPath}/{prj}/{log}.7z"
+                command =f"find {arcPath}/{prj} -name {log}.7z"
 
-    for log in toDeleteRAW:'''
+                # below line command will actually
+                # execute in your remote machine
+                (stdin, stdout, stderr) = client.exec_command(command)
+         
+                # redirecting all the output in cmd_output
+                # variable
+                cmd_output = stdout.read()
+                
+                
+                # create file which will read our
+                # cmd_output and write it in output_file
+                output_file="output.txt"
+                if cmd_output:
+                    with open(output_file, "w+") as file:
+                        output="Project "+prj+" "+log+" "+str(cmd_output)
+                        file.write(output)
+    except Exception as ex:
+        print(ex)
+        client.close()
+    finally:
+        client.close()
+
 
 if __name__ =="__main__":
-    results=readSpreadsheet()
-    print(results)
+    toDeleteRAW,toDeleteARC=readSpreadsheet()
+    logRemover(toDeleteRAW=toDeleteRAW,toDeleteARC=toDeleteARC)
