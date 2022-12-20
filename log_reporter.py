@@ -68,6 +68,7 @@ def spreadsheet_writer(server_logs, share_logs):
         worksheet1.write(0,2,"Archived")
         worksheet1.write(0,3,"On Shares")
         worksheet1.write(0,4, "Set to Delete")
+
         dict_writer(server_logs,share_logs,worksheet1)
         
         workbook.close()   
@@ -84,7 +85,9 @@ def dict_writer(server_logs, share_logs, worksheet):
                         if log+".7z" in share_logs[key]:
                                 worksheet.write(row,col+3, "*")
                         row+=1
-
+        row=str(row)
+        #Apply data verification in Set to Delete column so only * is used.
+        worksheet.data_validation(f"E2:E{row}", {'validate': 'list',"source": ["*"]})
 
 def main():
         config=load_config("config.json")
