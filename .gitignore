@@ -1,5 +1,6 @@
 # ignore .json files
 *.json
 *.xlsx
+*.txt
 *test.py
 !template-config.json

@@ -1,12 +1,12 @@
 import pandas as pd
-import paramiko
+import paramiko, sys
 from log_reporter import get_creds, load_config
 
 #Funtion for reading spreadsheet
 def readSpreadsheet():
     print("-----------------------------------------------")
     xlsxFile=input("Enter log report filename:")
-
+    
     #Specify which collumns will be looked at
     required_cols=[0,1,2,4]
 
@@ -18,14 +18,15 @@ def readSpreadsheet():
         sheetdata= pd.read_excel(io=xlsxFile,usecols=required_cols)
         for ind in sheetdata.index:
         #Find logs that are set to delete
-            if sheetdata['Set to Delete'][ind]:
+            print(sheetdata['Set to Delete'][ind])
+            if str(sheetdata['Set to Delete'][ind]) =="*":
                 if sheetdata['Project'][ind] not in toDeleteRAW:
                     toDeleteRAW[sheetdata['Project'][ind]]=[]
                     toDeleteRAW[sheetdata['Project'][ind]].append(sheetdata['Log'][ind])
                 else:
                     toDeleteRAW[sheetdata['Project'][ind]].append(sheetdata['Log'][ind])
                 #Check if log is archived.
-                if sheetdata['Archived'][ind]:
+                if str(sheetdata['Archived'][ind])=="*":
                     if sheetdata['Project'][ind] not in toDeleteARC:
                         toDeleteARC[sheetdata['Project'][ind]]=[]
                         toDeleteARC[sheetdata['Project'][ind]].append(sheetdata['Log'][ind])
@@ -40,7 +41,8 @@ def readSpreadsheet():
     
 def logRemover(toDeleteRAW,toDeleteARC):
     print('running')
-
+    delRAW=dict(toDeleteRAW)
+    delARC=dict(toDeleteARC)
     username,pw =get_creds()
     config=load_config("config.json")
     hostname=config["hosts"]["host1"]["hostname"]
@@ -54,16 +56,16 @@ def logRemover(toDeleteRAW,toDeleteARC):
          
         # connecting paramiko using host
         # name and password
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.load_system_host_keys()
-        client.connect(hostname=hostname, port=22, username=username,
-                       password=pw)
+        client.connect(hostname=hostname, port=22, username=username,password=pw)
 
         #iterate over raw logs to remove them.
-        for prj in toDeleteRAW:
-            for log in prj:
+        for prj in delRAW:
+            for log in delRAW[prj]:
                 #substitute find command for rm -Rf when testing
                 #command= f"rm -RF {rawPath}/{prj}/{log}"
-                command =f"find {rawPath}/{prj} -name {log}"
+                command =f"find {rawPath}{prj} -name {log}"
 
                 # below line command will actually
                 # execute in your remote machine
@@ -73,18 +75,18 @@ def logRemover(toDeleteRAW,toDeleteARC):
                 # variable
                 cmd_output = stdout.read()
                 
-                
                 # create file which will read our
                 # cmd_output and write it in output_file
                 output_file="output.txt"
                 if cmd_output:
-                    with open(output_file, "w+") as file:
-                        output="Project "+prj+" "+log+" "+str(cmd_output)
+                    with open(output_file, "a") as file:
+                        #output="Project "+prj+" "+log+" "+str(cmd_output)
+                        output=f"Project {prj} {log} {str(cmd_output)}\n"
                         file.write(output)
         
         #iterate over archived logs to remove them.
         for prj in toDeleteARC:
-            for log in prj:
+            for log in delARC[prj]:
                 #substitute find command for rm -Rf when testing
                 #command= f"rm -RF {arcPath}/{prj}/{log}.7z"
                 command =f"find {arcPath}/{prj} -name {log}.7z"
@@ -102,11 +104,17 @@ def logRemover(toDeleteRAW,toDeleteARC):
                 # cmd_output and write it in output_file
                 output_file="output.txt"
                 if cmd_output:
-                    with open(output_file, "w+") as file:
-                        output="Project "+prj+" "+log+" "+str(cmd_output)
+                    with open(output_file, "a") as file:
+                        output=f"Project {prj} {log} {str(cmd_output)}\n"
                         file.write(output)
-    except Exception as ex:
-        print(ex)
+    except Exception as e:
+        exception_type, exception_object, exception_traceback = sys.exc_info()
+        filename = exception_traceback.tb_frame.f_code.co_filename
+        line_number = exception_traceback.tb_lineno
+
+        print("Exception type: ", exception_type)
+        print("File name: ", filename)
+        print("Line number: ", line_number)
         client.close()
     finally:
         client.close()
