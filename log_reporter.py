@@ -28,37 +28,42 @@ def share_logs(projects, fileshares_path):
 def logger_connect(config):
         # Connect to logserver and retrieve dictionary of logs by project number
         config = load_config("config.json")
-        
-        logserver= config['hosts']['host1']
-        fileshares= config['hosts']['host2']
-        projects= config["Projects"]
         username,pw=get_creds()
-        logs={"raw":{},"ark":{}}
-        # Login to logserver using Netmiko and creds
-        try:
-
-                logserver_connection= ConnectHandler(**{"device_type":logserver["device_type"],"host":logserver["hostname"],"username":username, "password":pw})
+        
+        for host in config['hosts']:
+                logserverIP= config['hosts'][host]["IP"]
+                fileshares= config['hosts'][host]["log_filepath"]
+                projects= config["Projects"]
+                hostname= config["hosts"][host]["hostname"]
+                raw_log_path=config["hosts"][host]["raw_log_path"]
+                ark_log_path=config["hosts"][host]["ark_log_path"]
+                logs={"raw":{},"ark":{}}
+                device_type=config['hosts'][host]["device_type"]
+                # Login to logserver using Netmiko and creds
                 try:
-                        for i in projects:
-                                raw_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["raw_log_path"]+i))
-                                logs["raw"][i]=raw_logs.split()
-                                ark_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(logserver["ark_log_path"]+i))
-                                logs["ark"][i]=ark_logs.split()
-                        logserver_connection.disconnect()
-                
-                except:
-                        print("Command failed")
-                        logserver_connection.disconnect()
-                        sys.exit()
-                return logs
-        except Exception:
-                print("SSH connection failed on",logserver["hostname"],". Check authentication.")
-                sys.exit()  
 
+                        logserver_connection= ConnectHandler(**{"device_type":device_type,"host":logserverIP,"username":username, "password":pw})
+                        try:
+                                for i in projects:
+                                        raw_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(raw_log_path+i))
+                                        logs["raw"][i]=raw_logs.split()
+                                        ark_logs= logserver_connection.send_command("ls -lh {} | awk '{{print $9}}'".format(ark_log_path+i))
+                                        logs["ark"][i]=ark_logs.split()
+                                logserver_connection.disconnect()
+                        
+                        except:
+                                print("Command failed")
+                                logserver_connection.disconnect()
+                                sys.exit()
+                        
+                except Exception:
+                        print("SSH connection failed on ",hostname,". Check authentication.")
+                        sys.exit()  
+                shares= share_logs(config["Projects"], fileshares)
+                spreadsheet_writer(logs,share_logs=shares,hostname=hostname)
 # Create Spreadsheet
-def spreadsheet_writer(server_logs, share_logs):
-        file_name= str(date.today())+".xlsx"
-        headers=["Project","Log","Set to Delete","On server"]
+def spreadsheet_writer(server_logs, share_logs,hostname):
+        file_name= str(date.today())+"_"+hostname+".xlsx"
         workbook = xlsxwriter.Workbook(file_name)
         
         # Create worksheet 1 with raw logs on log server
@@ -92,8 +97,7 @@ def dict_writer(server_logs, share_logs, worksheet):
 def main():
         config=load_config("config.json")
         logs=logger_connect(config)
-        shares_logs= share_logs(config["Projects"], config["hosts"]["host2"]["log_filepath"])
-        spreadsheet_writer(logs, shares_logs)
+        
 
 
         

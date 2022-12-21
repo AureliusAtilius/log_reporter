@@ -18,7 +18,7 @@ def readSpreadsheet():
         sheetdata= pd.read_excel(io=xlsxFile,usecols=required_cols)
         for ind in sheetdata.index:
         #Find logs that are set to delete
-            print(sheetdata['Set to Delete'][ind])
+            
             if str(sheetdata['Set to Delete'][ind]) =="*":
                 if sheetdata['Project'][ind] not in toDeleteRAW:
                     toDeleteRAW[sheetdata['Project'][ind]]=[]
