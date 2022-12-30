@@ -3,4 +3,5 @@
 *.xlsx
 *.txt
 *test.py
+*.venv
 !template-config.json
