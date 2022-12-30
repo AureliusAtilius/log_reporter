@@ -5,3 +5,4 @@
 *test.py
 *.venv
 !template-config.json
+!requirements.txt
